@@ -66,6 +66,8 @@ Claude Desktop (`claude_desktop_config.json`) :
 | `imagegen_status` | santé du routeur, expiration du jeton ChatGPT, présence du MCP France Student |
 | `francestudent_agents` | agents France Student disponibles |
 
+Prompt prêt à coller dans les instructions d'un agent : [AGENT_PROMPT.md](AGENT_PROMPT.md).
+
 ## CLI
 
 ```powershell

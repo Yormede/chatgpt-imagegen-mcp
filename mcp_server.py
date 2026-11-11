@@ -16,7 +16,7 @@ Claude Desktop (claude_desktop_config.json) :
   "mcpServers": {
     "imagegen": {
       "command": "python",
-      "args": ["C:\\\\chemin\\\\vers\\\\chatgpt-imagegen-mcp\\\\mcp_server.py"]
+      "args": ["C:\\\\\\\\chemin\\\\\\\\vers\\\\\\\\chatgpt-imagegen-mcp\\\\\\\\mcp_server.py"]
     }
   }
 }
@@ -141,6 +141,10 @@ def codex_quota():
                 except json.JSONDecodeError:
                     pass
     since = reset if reset and reset <= now else now - 24 * 3600
+    if reset and reset <= now:
+        # Le 429 appartient a la fenetre precedente ; la derniere mesure
+        # valide est celle des en-tetes d'une generation reussie.
+        used = qh.get("used_percent", used)
     recent = [a for a in appels if datetime.fromisoformat(a["ts"]).timestamp() >= since]
     exhausted = bool(reset and reset > now and (used or 0) >= 100)
     return {

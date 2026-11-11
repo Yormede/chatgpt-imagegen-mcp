@@ -12,6 +12,7 @@ mesure officielle, et le 429 confirme l'epuisement.
 from __future__ import annotations
 
 import json
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -70,6 +71,10 @@ def main():
 
     if plan or window:
         print(f"Plan : {plan or '?'}   Fenetre : {window or '?'} minutes")
+    if reset and reset <= now:
+        # Le 429 appartient a la fenetre precedente ; la mesure valide est
+        # celle des en-tetes de la derniere image reussie.
+        used = qh.get("used_percent", 0) if qh else 0
     if used is not None:
         print(f"Utilisation : {used:.0f} %")
     if reset:
@@ -80,14 +85,29 @@ def main():
     if reset and reset <= now:
         # Fenetre precedente terminee : on repart de zero depuis le reset.
         recent = [a for a in appels if datetime.fromisoformat(a["ts"]).timestamp() >= reset]
-        used = 0
         print(f"Fenetre precedente terminee ; {len(recent)} image(s) depuis le reset.")
 
     epuise = bool(reset and reset > now and (used or 0) >= 100)
     reste = 0 if epuise else max(0, OBSERVED_CAP - len(recent))
     print(f"\nCapacite observee : environ {OBSERVED_CAP} images / 24 h (plan Plus)")
     print(f"Reste estime : {reste} image(s)")
-    print("\nPage officielle : https://chatgpt.com/settings/usage")
+
+    if "--no-fs" not in sys.argv:
+        print("\n=== Quota France Student ===")
+        try:
+            from francestudent_client import FrancestudentMcp
+            usage = FrancestudentMcp().usage(timeout=90)
+            cb = usage.get("chatBudget") or {}
+            print(f"Budget chat : {cb.get('usedPercent')} % utilise, "
+                  f"{cb.get('remainingPercent')} % restant")
+            print(f"Reset budget : {cb.get('resetAt')}")
+            for r in usage.get("rateLimits") or []:
+                print(f"  {r.get('type')} : {r.get('remaining')}/{r.get('limit')} "
+                      f"(reset {r.get('resetAt')})")
+        except Exception as e:  # noqa: BLE001
+            print(f"France Student indisponible : {e}")
+
+    print("\nPage officielle ChatGPT : https://chatgpt.com/settings/usage")
 
 
 if __name__ == "__main__":
